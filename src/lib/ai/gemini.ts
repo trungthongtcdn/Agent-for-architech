@@ -119,6 +119,54 @@ async function generateImage(req: ImageRequest): Promise<ImageResult> {
   });
 }
 
+// ---------------- Văn bản JSON (cho "AI viết prompt") ----------------
+
+export type JsonRequest = { model: string; system: string; text: string; images?: { mime: string; data: Buffer }[]; schema?: Record<string, unknown> };
+
+function extractJsonText(json: Json): unknown {
+  const candidates = (json.candidates ?? []) as { content?: { parts?: Part[] } }[];
+  const text = (candidates[0]?.content?.parts ?? [])
+    .filter((p) => !p.thought && p.text)
+    .map((p) => p.text)
+    .join("")
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  if (!text) throw new AiError("AI không trả về nội dung", true);
+  try {
+    return JSON.parse(text);
+  } catch {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+    throw new AiError("AI trả về dữ liệu không đọc được", true, text.slice(0, 200));
+  }
+}
+
+/** Gọi model văn bản, ép trả JSON theo schema (OpenAPI subset). API không nhận schema → thử lại chỉ với JSON mode. */
+export async function generateJson(req: JsonRequest): Promise<unknown> {
+  const body = (withSchema: boolean) => ({
+    systemInstruction: { parts: [{ text: req.system }] },
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: req.text }, ...(req.images ?? []).map((i) => ({ inline_data: { mime_type: i.mime, data: i.data.toString("base64") } }))],
+      },
+    ],
+    generationConfig: { responseMimeType: "application/json", temperature: 0.6, ...(withSchema && req.schema ? { responseSchema: req.schema } : {}) },
+  });
+  const path = `models/${encodeURIComponent(req.model)}:generateContent`;
+  return withRetry(async () => {
+    try {
+      return extractJsonText(await call(path, { body: body(true), timeoutMs: 90_000 }));
+    } catch (e) {
+      if (e instanceof AiError && /schema|enum|Unknown name|Invalid JSON payload/i.test(e.detail ?? ""))
+        return extractJsonText(await call(path, { body: body(false), timeoutMs: 90_000 }));
+      throw e;
+    }
+  }, 2);
+}
+
 // ---------------- Video (Gemini Omni Flash qua Interactions API) ----------------
 
 type VideoRef = { uri?: string; data?: string; mime?: string };

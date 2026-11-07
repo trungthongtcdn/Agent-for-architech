@@ -10,7 +10,14 @@ Web app mobile-first, tiếng Việt, gồm 4 công cụ AI chạy trên **Googl
 | **Video AI** | 1 ảnh làm khung đầu | `gemini-omni-1.1-flash` (Interactions API), có âm thanh | 15 (360p) · 40 (720p) · 55 (1080p) |
 
 Tính năng kèm theo:
-- Preset theo thị trường VN: 10 phong cách (Hiện đại, Indochine, Tân cổ điển, Japandi, Nhiệt đới…), ánh sáng, mức bám hình khối, bối cảnh Việt Nam, thêm người cho tỉ lệ; 6 kiểu chuyển động máy quay cho video.
+- **Bộ preset phong phú** (tham khảo mnml.ai, LookX, SketchUp AI Render và các công cụ Trung Quốc như 云朵光影/EVAI/LiblibAI):
+  22 phong cách chia nhóm Hiện đại / Á Đông / Cổ điển & Âu (gồm xu hướng 2026: Cream, Tối giản ấm, Ý tối giản, Á Đông hiện đại, Tân Trung Hoa, Thuần Việt…),
+  12 loại công trình (nhà phố, shophouse, chung cư, nhà mẫu/sales gallery…), 17 loại phòng (có phòng thờ, sảnh, showroom…),
+  9 góc máy, 7 kiểu diễn họa (ảnh thực, diễn họa BĐS, tạp chí, **sa bàn**, màu nước…), 14 vật liệu (chọn tối đa 4), bối cảnh, mùa/không khí (có **Tết**),
+  mức đầu tư nội thất, 10 chuyển động máy quay video + tốc độ.
+- **31 mẫu có sẵn** theo tình huống (nhà ở, dự án BĐS, thương mại & nghỉ dưỡng, cho thuê, nhà thô → hoàn thiện, flycam, reels…): chạm 1 lần là điền sẵn.
+- **AI viết câu lệnh**: người dùng mô tả bằng tiếng Việt (có thể kèm ảnh) → Gemini (`gemini-3.8-flash`, ép trả JSON theo schema) viết câu lệnh tiếng Anh chi tiết + tự chọn preset phù hợp. Chế độ DEMO / khi AI lỗi dùng bộ nhận diện từ khoá tiếng Việt (có/không dấu). Miễn phí, giới hạn lượt/ngày.
+- **Xem câu lệnh gửi AI**: hiển thị đúng câu lệnh cuối cùng sẽ gửi cho model, để người dùng nâng cao kiểm soát.
 - Chuỗi thao tác: từ kết quả Render bấm **Upscale 4K / Tạo video / Staging** — không cần tải lại ảnh.
 - Thư viện kết quả, xem toàn màn hình, giữ để so sánh với ảnh gốc, tải về.
 - Credit dạng sổ cái (ledger): trừ khi tạo, **tự hoàn** khi AI lỗi (hoàn từng phần nếu chỉ vài phương án lỗi).
@@ -49,10 +56,14 @@ docker compose logs -f              # thấy "[archrender] AI mode: gemini" là 
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Tài khoản admin tạo tự động lúc khởi động |
 | `BANK_ID`, `BANK_ACCOUNT_NO`, `BANK_ACCOUNT_NAME` | Thông tin nhận chuyển khoản, sinh QR qua img.vietqr.io |
 | `SIGNUP_BONUS_CREDITS` | Credit tặng khi đăng ký (mặc định 30) |
+| `GEMINI_TEXT_MODEL`, `PROMPT_ASSIST_DAILY_LIMIT` | Model và số lượt/ngày cho "AI viết câu lệnh" (mặc định `gemini-3.8-flash`, 50) |
 | `APP_URL` | URL công khai; `https://` thì cookie tự bật Secure |
 
-## Đổi giá, gói, preset
-Tất cả nằm trong `src/lib/catalog.ts`: `PRICES` (credit mỗi tác vụ), `PACKAGES` (gói nạp & giá VNĐ), danh sách phong cách / ánh sáng / phòng / chuyển động. Câu lệnh (prompt) gửi cho AI nằm trong `src/lib/prompts.ts`.
+## Đổi giá, gói, preset, mẫu
+- `src/lib/catalog.ts`: `PRICES` (credit mỗi tác vụ), `PACKAGES` (gói nạp & giá VNĐ), toàn bộ preset (mỗi preset có nhãn tiếng Việt + đoạn mô tả tiếng Anh gửi cho AI).
+- `src/lib/templates.ts`: thư viện mẫu có sẵn.
+- `src/lib/assist-fields.ts`: từ khoá tiếng Việt để nhận diện preset; `src/lib/assist.ts`: hướng dẫn hệ thống cho "AI viết câu lệnh".
+- `src/lib/prompts.ts`: cách ghép câu lệnh. Thứ tự theo công thức phổ biến của cộng đồng archviz: chủ thể → phong cách → bối cảnh → vật liệu → ánh sáng/không khí → góc máy → kiểu diễn họa → chất lượng & điều cấm (chủ thể đặt đầu vì model chú ý mạnh nhất vào phần đầu). Video: đúng 1 chuyển động máy quay, đặt đầu câu, ghi rõ tốc độ và hướng.
 
 Giá vốn tham khảo (Google, 11/2026): Nano Banana 2.1 ≈ $0.05/ảnh 2K, $0.11/ảnh 4K; Nano Banana Pro ≈ $0.13/ảnh 2K, $0.24/ảnh 4K; Omni Flash ≈ $0.10/giây video 720p. Kiểm tra lại bảng giá Gemini trước khi chốt `PRICES`.
 

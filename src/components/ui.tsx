@@ -43,6 +43,81 @@ export function Chips<T extends string>({
   );
 }
 
+/** Chips theo nhóm (vd. phong cách Hiện đại / Á Đông / Cổ điển). */
+export function GroupedChips({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly { id: string; label: string; group?: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const groups = [...new Set(options.map((o) => o.group ?? ""))];
+  return (
+    <div className="space-y-2">
+      {groups.map((g) => (
+        <div key={g}>
+          {g && <div className="mb-1 text-[11px] uppercase tracking-wide text-muted">{g}</div>}
+          <Chips options={options.filter((o) => (o.group ?? "") === g)} value={value} onChange={onChange} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Chọn nhiều (vd. vật liệu, tối đa max). */
+export function MultiChips({
+  options,
+  value,
+  onChange,
+  max,
+}: {
+  options: readonly { id: string; label: string }[];
+  value: string[];
+  onChange: (v: string[]) => void;
+  max: number;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const on = value.includes(o.id);
+        const disabled = !on && value.length >= max;
+        return (
+          <button
+            type="button"
+            key={o.id}
+            disabled={disabled}
+            onClick={() => onChange(on ? value.filter((v) => v !== o.id) : [...value, o.id])}
+            className={`rounded-full border px-3 py-1.5 text-sm transition ${
+              on ? "border-accent bg-accent-soft text-accent" : "border-line bg-white text-ink hover:border-ink/40"
+            } ${disabled ? "opacity-40" : ""}`}
+          >
+            {on ? "✓ " : ""}
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function Disclosure({ title, hint, children, defaultOpen = false }: { title: string; hint?: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-xl border border-line bg-white/70">
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium">
+        <span>
+          {title}
+          {hint && <span className="ml-2 text-xs font-normal text-muted">{hint}</span>}
+        </span>
+        <span className={`text-muted transition ${open ? "rotate-180" : ""}`}>⌄</span>
+      </button>
+      {open && <div className="space-y-5 border-t border-line px-3 py-4">{children}</div>}
+    </div>
+  );
+}
+
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-line bg-white px-3 py-2.5 text-sm">

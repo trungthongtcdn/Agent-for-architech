@@ -150,6 +150,55 @@ check(r.status === 400, "tham số sai bị từ chối: " + r.body.error);
 r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "exterior", style: "modern" }, Buffer.from("not an image")) });
 check(r.status === 400, "file không phải ảnh bị từ chối: " + r.body.error);
 
+// --- Preset mới + AI viết prompt ---
+const aiMode = (await user("/api/me")).body.aiMode;
+r = await user("/api/jobs", {
+  method: "POST",
+  form: jobForm("render", { scene: "exterior", building: "villa", style: "newasian", lighting: "bluehour", atmosphere: "tet", context: "seaside", camera: "drone", renderStyle: "model", materials: ["stone", "louver", "glass"], count: 1, detail: "A calm resort villa." }, img),
+});
+check(r.status === 201, "render với preset mới (công trình, góc máy, sa bàn, vật liệu)");
+if (r.status === 201) {
+  const j = await waitJob(user, r.body.job.id);
+  check(j.job.status === "succeeded", "render preset mới xong");
+}
+r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "exterior", style: "modern", materials: ["vang-ròng"] }, img) });
+check(r.status === 400, "vật liệu không hợp lệ bị từ chối");
+r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "exterior", style: "modern", materials: ["stone", "glass", "oak", "brass", "rattan"] }, img) });
+check(r.status === 400, "quá 4 vật liệu bị từ chối");
+r = await user("/api/jobs", { method: "POST", form: jobForm("video", { move: "walkthrough", speed: "slow", ambience: "water", resolution: "360p" }, img) });
+check(r.status === 201, "video chuyển động mới (đi xuyên không gian)");
+if (r.status === 201) await waitJob(user, r.body.job.id, 180_000);
+
+const assist = (fields) => {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+  return user("/api/prompt/assist", { method: "POST", form: fd });
+};
+r = await assist({ tool: "render", text: "Biệt thự Indochine ven biển lúc hoàng hôn, ốp đá tự nhiên và lam gỗ, góc flycam" });
+if (aiMode === "mock") {
+  const s = r.body.suggestions ?? {};
+  check(
+    r.status === 200 && r.body.mode === "rules" && s.style === "indochine" && s.building === "villa" && s.lighting === "golden" && s.context === "seaside" && s.camera === "drone" && s.materials?.includes("stone") && s.materials?.includes("louver"),
+    `AI viết prompt (từ khoá): ${JSON.stringify(s)}`,
+  );
+} else {
+  check(r.status === 200 && r.body.mode === "ai" && r.body.detail.length > 0, `AI viết prompt (Gemini): ${r.body.summary} | ${JSON.stringify(r.body.suggestions)}`);
+}
+r = await assist({ tool: "render", text: "nha pho phong cach dong duong, ban dem" });
+check(r.status === 200 && (aiMode !== "mock" || (r.body.suggestions.style === "indochine" && r.body.suggestions.lighting === "night")), `nhận diện tiếng Việt không dấu: ${JSON.stringify(r.body.suggestions)}`);
+r = await assist({ tool: "render", text: "Nhà phố Đông Dương, cửa sổ làm bằng kính" });
+check(r.status === 200 && !(r.body.suggestions.materials ?? []).includes("brass") && !(r.body.suggestions.materials ?? []).includes("louver"), "không nhận nhầm 'Đông' thành đồng, 'làm' thành lam");
+r = await assist({ tool: "staging", text: "phòng ngủ cho thuê giá rẻ phong cách bắc âu" });
+check(r.status === 200 && (aiMode !== "mock" || (r.body.suggestions.room === "bedroom" && r.body.suggestions.budget === "economy" && r.body.suggestions.style === "scandi")), `staging: ${JSON.stringify(r.body.suggestions)}`);
+r = await assist({ tool: "video", text: "flycam bay lên chậm, khung dọc đăng tiktok, có nhạc" });
+check(r.status === 200 && (aiMode !== "mock" || (r.body.suggestions.move === "crane" && r.body.suggestions.aspect === "9:16" && r.body.suggestions.audio === "music")), `video: ${JSON.stringify(r.body.suggestions)}`);
+r = await assist({ tool: "upscale", text: "nâng nét" });
+check(r.status === 400, "upscale không dùng AI viết prompt");
+r = await assist({ tool: "render", text: "a" });
+check(r.status === 400, "mô tả quá ngắn bị từ chối");
+r = await assist({ tool: "render", text: "chung cư hiện đại", sourceJobId: render.job.id, sourceIndex: "0" });
+check(r.status === 200, "AI viết prompt kèm ảnh từ kết quả trước");
+
 // --- Admin ---
 r = await admin("/api/admin/overview");
 check(r.status === 200 && r.body.stats.users >= 2, `admin overview: ${JSON.stringify(r.body.stats)}`);

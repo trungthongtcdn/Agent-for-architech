@@ -28,12 +28,15 @@ export const config = {
     imageModel: env("GEMINI_IMAGE_MODEL", "gemini-nano-banana-2.1"),
     imageProModel: env("GEMINI_IMAGE_PRO_MODEL", "gemini-3-pro-image"),
     videoModel: env("GEMINI_VIDEO_MODEL", "gemini-omni-1.1-flash"),
+    /** Model văn bản cho "AI viết prompt". */
+    textModel: env("GEMINI_TEXT_MODEL", "gemini-3.8-flash"),
   },
 
   jobConcurrency: envInt("JOB_CONCURRENCY", 3),
   videoConcurrency: envInt("VIDEO_CONCURRENCY", 2),
   maxActiveJobsPerUser: envInt("MAX_ACTIVE_JOBS_PER_USER", 3),
   maxUploadMb: envInt("MAX_UPLOAD_MB", 15),
+  promptAssistDailyLimit: envInt("PROMPT_ASSIST_DAILY_LIMIT", 50),
 
   // Đủ để thử 1 render 2 phương án + 1 video nháp.
   signupBonus: envInt("SIGNUP_BONUS_CREDITS", 30),

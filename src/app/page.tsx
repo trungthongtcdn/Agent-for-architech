@@ -4,10 +4,10 @@ import { formatVnd, PACKAGES, PRICES, TOOLS } from "@/lib/catalog";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "ArchRender";
 
 const FEATURES: Record<string, string[]> = {
-  render: ["Ngoại thất, nội thất, cảnh quan, quy hoạch, mặt bằng 3D", "10 phong cách: Hiện đại, Indochine, Tân cổ điển, Japandi…", "Giữ đúng hình khối, thêm ảnh moodboard tham chiếu"],
-  staging: ["Phòng khách, ngủ, bếp, ăn, làm việc, ban công…", "Tự dọn đồ cũ trước khi bày", "Nhiều phương án bố trí cho một căn phòng"],
+  render: ["Ngoại thất, nội thất, cảnh quan, quy hoạch, mặt bằng 3D, sa bàn", "22 phong cách: Indochine, Tân cổ điển, Cream, Á Đông, Thuần Việt…", "Mô tả bằng tiếng Việt, AI tự viết câu lệnh & chọn tuỳ chọn"],
+  staging: ["17 loại phòng: nhà ở, phòng thờ, sảnh, café, showroom…", "Chọn mức đầu tư: tiết kiệm đến hạng sang", "Tự dọn đồ cũ, nhiều phương án bố trí"],
   upscale: ["Nâng lên 2K hoặc 4K", "Giữ nguyên chi tiết hoặc tăng độ chân thực", "Dùng cho in ấn, bảng quảng cáo"],
-  video: ["Tiến vào, lùi ra, lia, quay quanh, flycam", "Có âm thanh môi trường hoặc nhạc nền", "Khung ngang hoặc dọc cho Reels/TikTok"],
+  video: ["10 kiểu máy quay: flycam, quay quanh, đi xuyên căn hộ…", "Có âm thanh môi trường hoặc nhạc nền", "Khung ngang hoặc dọc cho Reels/TikTok"],
 };
 
 export default function Home() {

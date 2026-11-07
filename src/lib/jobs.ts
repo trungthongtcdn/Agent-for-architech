@@ -2,18 +2,29 @@ import { z } from "zod";
 import { newId, type User } from "./auth";
 import {
   ASPECTS,
+  ATMOSPHERES,
+  BUDGETS,
+  BUILDINGS,
   CAMERA_MOVES,
+  CAMERAS,
+  CONTEXTS,
   FIDELITY,
   INPUT_KINDS,
   jobCost,
   LIGHTING,
+  MATERIALS,
+  MAX_MATERIALS,
   PRICES,
+  REF_STRENGTH,
+  RENDER_STYLES,
   ROOMS,
   SCENES,
+  STAGING_LIGHTING,
   STYLES,
   UPSCALE_MODES,
   VIDEO_AMBIENCE,
   VIDEO_AUDIO,
+  VIDEO_SPEEDS,
   type JobParams,
   type ToolType,
 } from "./catalog";
@@ -31,36 +42,57 @@ const quality = z.enum(["standard", "pro"]).default("standard");
 const note = z.string().max(800).optional();
 const bool = z.union([z.boolean(), z.enum(["true", "false"]).transform((v) => v === "true")]).default(false);
 
+const detail = z.string().max(1500).optional();
+const materials = z
+  .array(z.enum(ids(MATERIALS)))
+  .max(MAX_MATERIALS)
+  .default([]);
+
 const SCHEMAS = {
   render: z.object({
     scene: z.enum(ids(SCENES)),
+    building: z.enum(ids(BUILDINGS)).default("auto"),
+    room: z.enum(ids(ROOMS)).default("living"),
     inputKind: z.enum(ids(INPUT_KINDS)).default("viewport"),
     style: z.enum(ids(STYLES)),
     lighting: z.enum(ids(LIGHTING)).default("day"),
+    atmosphere: z.enum(ids(ATMOSPHERES)).default("none"),
+    context: z.enum(ids(CONTEXTS)).default("auto"),
+    camera: z.enum(ids(CAMERAS)).default("keep"),
+    renderStyle: z.enum(ids(RENDER_STYLES)).default("photo"),
+    materials,
     fidelity: z.enum(ids(FIDELITY)).default("strict"),
+    refStrength: z.enum(ids(REF_STRENGTH)).default("medium"),
     aspect: z.enum(ASPECTS.map((a) => a.id) as [string, ...string[]]).default("auto"),
     quality,
     count: z.coerce.number().int().min(1).max(4).default(1),
     vietnam: bool,
     people: bool,
     prompt: note,
+    detail,
   }),
   staging: z.object({
     room: z.enum(ids(ROOMS)),
     style: z.enum(ids(STYLES)),
+    budget: z.enum(ids(BUDGETS)).default("mid"),
+    materials,
+    lighting: z.enum(ids(STAGING_LIGHTING)).default("keep"),
     declutter: bool,
     quality,
     count: z.coerce.number().int().min(1).max(4).default(1),
     prompt: note,
+    detail,
   }),
   upscale: z.object({ size: z.enum(["2K", "4K"]).default("4K"), mode: z.enum(ids(UPSCALE_MODES)).default("faithful"), quality }),
   video: z.object({
     move: z.enum(ids(CAMERA_MOVES)),
+    speed: z.enum(ids(VIDEO_SPEEDS)).default("slow"),
     ambience: z.enum(ids(VIDEO_AMBIENCE)).default("nature"),
     audio: z.enum(ids(VIDEO_AUDIO)).default("ambient"),
     aspect: z.enum(["16:9", "9:16"]).default("16:9"),
     resolution: z.enum(["360p", "720p", "1080p"]).default("720p"),
     prompt: note,
+    detail,
   }),
 } satisfies Record<ToolType, z.ZodType>;
 

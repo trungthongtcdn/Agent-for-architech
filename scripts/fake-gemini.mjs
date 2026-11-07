@@ -40,6 +40,23 @@ http
       const text = parts.find((p) => p.text)?.text ?? "";
       const imgs = parts.filter((p) => p.inline_data?.data);
       const gc = body.generationConfig ?? {};
+      // ---- Văn bản JSON ("AI viết prompt") ----
+      if (gc.responseMimeType === "application/json") {
+        if (process.env.FAKE_REJECT_SCHEMA && gc.responseSchema)
+          return log("reject schema"), json(res, 400, { error: { status: "INVALID_ARGUMENT", message: 'Invalid JSON payload received. Unknown name "responseSchema"' } });
+        const props = gc.responseSchema?.properties ?? {};
+        const user = text.toLowerCase();
+        const out = { summary_vi: "Giả lập: đã hiểu mô tả của bạn.", detail_en: `FAKE brief for: ${text.slice(0, 80)}` };
+        for (const [k, v] of Object.entries(props)) {
+          const ids = v.enum ?? v.items?.enum;
+          if (!ids) continue;
+          const hit = ids.filter((id) => user.includes(id.toLowerCase()));
+          if (hit.length) out[k] = v.type === "ARRAY" ? hit : hit[0];
+        }
+        out.style = out.style ?? "indochine";
+        log(`text model=${m[1]} images=${imgs.length} schema=${!!gc.responseSchema} system=${(body.systemInstruction?.parts?.[0]?.text ?? "").length}ch`);
+        return json(res, 200, { candidates: [{ content: { parts: [{ text: "```json\n" + JSON.stringify(out) + "\n```" }] } }] });
+      }
       const sizing = gc.responseFormat?.image ?? gc.imageConfig;
       if (process.env.FAKE_REJECT_RESPONSE_FORMAT && gc.responseFormat)
         return log("reject responseFormat"), json(res, 400, { error: { status: "INVALID_ARGUMENT", message: 'Invalid JSON payload received. Unknown name "responseFormat" at \'generation_config\'' } });
