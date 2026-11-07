@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #16150f;
+  --color-paper: #f6f4ef;
+  --color-line: #e4e0d6;
+  --color-muted: #6f6a5e;
+  --color-accent: #b4541f;
+  --color-accent-soft: #f6e6d9;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.checker {
+  background-image: linear-gradient(45deg, #eeebe4 25%, transparent 25%), linear-gradient(-45deg, #eeebe4 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eeebe4 75%), linear-gradient(-45deg, transparent 75%, #eeebe4 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, #ebe7de 0%, #f5f2ec 50%, #ebe7de 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
