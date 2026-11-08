@@ -45,7 +45,7 @@ export const BUILDINGS: Option[] = [
 
 export const INPUT_KINDS: Option[] = [
   { id: "viewport", label: "Ảnh SketchUp/3D", prompt: "a 3D modeling viewport screenshot (SketchUp / clay or untextured model)" },
-  { id: "sketch", label: "Phác thảo tay", prompt: "a hand-drawn architectural sketch" },
+  { id: "sketch", label: "Phác thảo tay", prompt: "a hand-drawn / sketch-style architectural drawing (pencil lines, possibly watercolour washes on paper)" },
   { id: "photo", label: "Ảnh chụp thực tế", prompt: "a real photograph of the existing site/building" },
   { id: "render", label: "Ảnh render cũ", prompt: "an existing low-quality render that needs to be re-rendered photorealistically" },
 ];

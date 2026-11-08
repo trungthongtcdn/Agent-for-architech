@@ -288,8 +288,15 @@ export function matchKeywords(tool: ToolType, text: string): Record<string, stri
         .slice(0, MAX_MATERIALS);
       if (hits.length) out[f.key] = hits;
     } else {
-      const hit = Object.entries(f.keywords).find(([, kws]) => kws.some(has));
-      if (hit) out[f.key] = hit[0];
+      // Chọn lựa chọn được nhắc tới SỚM NHẤT trong câu (thường là ý chính: "Style hiện đại, vật liệu tối giản" → Hiện đại);
+      // trùng vị trí thì ưu tiên từ khoá dài hơn ("tối giản ấm" thắng "tối giản", "phòng khách sạn" thắng "phòng khách").
+      let best: { id: string; pos: number; len: number } | null = null;
+      for (const [id, kws] of Object.entries(f.keywords))
+        for (const kw of kws) {
+          const pos = hay.indexOf(accented ? kw.toLowerCase() : fold(kw));
+          if (pos >= 0 && (!best || pos < best.pos || (pos === best.pos && kw.length > best.len))) best = { id, pos, len: kw.length };
+        }
+      if (best) out[f.key] = best.id;
     }
   }
   return out;

@@ -207,6 +207,8 @@ r = await assist({ tool: "render", text: "nha pho phong cach dong duong, ban dem
 check(r.status === 200 && (aiMode !== "mock" || (r.body.suggestions.style === "indochine" && r.body.suggestions.lighting === "night")), `nhận diện tiếng Việt không dấu: ${JSON.stringify(r.body.suggestions)}`);
 r = await assist({ tool: "render", text: "Nhà phố Đông Dương, cửa sổ làm bằng kính" });
 check(r.status === 200 && !(r.body.suggestions.materials ?? []).includes("brass") && !(r.body.suggestions.materials ?? []).includes("louver"), "không nhận nhầm 'Đông' thành đồng, 'làm' thành lam");
+r = await assist({ tool: "render", text: "Style hiện đại, vật liệu tối giản" });
+check(r.status === 200 && (aiMode !== "mock" || r.body.suggestions.style === "modern"), `ý chính đứng trước được ưu tiên ("hiện đại" thắng "tối giản"): ${JSON.stringify(r.body.suggestions)}`);
 r = await assist({ tool: "staging", text: "phòng ngủ cho thuê giá rẻ phong cách bắc âu" });
 check(r.status === 200 && (aiMode !== "mock" || (r.body.suggestions.room === "bedroom" && r.body.suggestions.budget === "economy" && r.body.suggestions.style === "scandi")), `staging: ${JSON.stringify(r.body.suggestions)}`);
 r = await assist({ tool: "video", text: "flycam bay lên chậm, khung dọc đăng tiktok, có nhạc" });

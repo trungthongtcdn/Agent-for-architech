@@ -78,6 +78,8 @@ export function renderPrompt(p: JobParams["render"], hasReference: boolean, vari
     const subject =
       scene.id === "interior" ? `an interior ${room.prompt}` : building.id !== "auto" && building.prompt ? `${building.prompt} (${scene.prompt})` : scene.prompt;
     lines.push(`Architectural visualization of ${subject}. The first image is ${kind.prompt}; render it as the finished, built design.`);
+    if (kind.id === "sketch")
+      lines.push("Treat the drawing only as the design: paper texture, border/frame lines, pencil hatching, watercolour washes and blank paper margins must NOT appear in the output — fill the frame with the real scene.");
     if (cam.id === "keep") lines.push(`${fidelity.prompt} Keep the exact camera position, lens and framing of the input.`);
     else lines.push(`Keep the same design (massing, facade composition, openings and layout) but re-frame the view as: ${cam.prompt}.`);
   }
