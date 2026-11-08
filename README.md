@@ -37,6 +37,8 @@ Chế độ DEMO tạo video cần `ffmpeg` trên máy (production dùng Gemini 
 
 ## Deploy lên VPS bằng Docker
 
+> Hướng dẫn đầy đủ từng bước (khảo sát VPS dùng chung, reverse proxy, HTTPS, kiểm thử, sao lưu, xử lý sự cố) ở **[docs/DEPLOY.md](docs/DEPLOY.md)** — viết để giao cho Claude Code thực hiện.
+
 ```bash
 git clone https://github.com/trungthongtcdn/Agent-for-architech.git archrender && cd archrender
 cp .env.example .env && nano .env   # GEMINI_API_KEY, ADMIN_*, BANK_*, APP_URL, APP_PORT

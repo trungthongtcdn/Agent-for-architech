@@ -9,8 +9,9 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      # Đổi APP_PORT trong .env nếu cổng đã bị dự án khác trên VPS dùng.
-      - "${APP_PORT:-3010}:3000"
+      # Mặc định chỉ mở cho máy chủ (127.0.0.1) để đi qua reverse proxy.
+      # Đổi APP_PORT nếu cổng đã bị dự án khác dùng; APP_BIND=0.0.0.0 nếu muốn truy cập thẳng bằng IP:cổng.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3010}:3000"
     volumes:
       - archrender-data:/data
 

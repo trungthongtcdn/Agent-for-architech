@@ -54,6 +54,18 @@ function jobForm(type, params, file, extra = {}) {
   return fd;
 }
 
+const SKIP_VIDEO = !!process.env.SKIP_VIDEO; // máy không có ffmpeg (vd. trong Docker image) → bỏ qua bước video ở chế độ DEMO
+
+// An toàn: script tạo nhiều tác vụ AI → không chạy trên server đang dùng Gemini thật (tốn tiền, và bước "lỗi giả lập" sẽ sai).
+{
+  const h = await fetch(BASE + "/api/health").then((r) => r.json()).catch(() => null);
+  if (!h) { console.error(`Không kết nối được ${BASE}/api/health`); process.exit(1); }
+  if (h.aiMode === "gemini" && !process.env.ALLOW_REAL_AI) {
+    console.error("Server đang chạy Gemini thật. Hãy chạy smoke test trên một container DEMO riêng (xem docs/DEPLOY.md), hoặc đặt ALLOW_REAL_AI=1 nếu chắc chắn.");
+    process.exit(2);
+  }
+}
+
 const img = await testImage();
 const user = client();
 const admin = client();
@@ -102,7 +114,10 @@ check(r.status === 402 && r.body.code === "insufficient_credits", "video 1080p k
 
 // --- Nạp credit + admin duyệt ---
 r = await user("/api/topups", { method: "POST", json: { packageId: "pro" } });
-check(r.status === 201 && r.body.topup.qr?.includes("img.vietqr.io") && r.body.topup.qr.includes(r.body.topup.code), `tạo yêu cầu nạp ${r.body.topup?.code}, có QR`);
+check(
+  r.status === 201 && (r.body.topup.qr === null || (r.body.topup.qr.includes("img.vietqr.io") && r.body.topup.qr.includes(r.body.topup.code))),
+  `tạo yêu cầu nạp ${r.body.topup?.code}, ${r.body.topup?.qr ? "có QR" : "chưa cấu hình ngân hàng nên không có QR"}`,
+);
 const topup = r.body.topup;
 r = await user(`/api/admin/topups/${topup.id}`, { method: "POST", json: { action: "approve" } });
 check(r.status === 403, "user thường không duyệt được");
@@ -133,6 +148,7 @@ const after = (await user("/api/credits")).body.credits;
 check(bad.job.status === "failed" && bad.job.refunded === 3 && after === before, `job lỗi được hoàn credit (${before} → ${after}): ${bad.job.error}`);
 
 // --- Video ---
+if (!SKIP_VIDEO) {
 r = await user("/api/jobs", { method: "POST", form: jobForm("video", { move: "push", ambience: "nature", audio: "ambient", aspect: "16:9", resolution: "360p" }, null, { sourceJobId: render.job.id, sourceIndex: "0" }) });
 check(r.status === 201 && r.body.job.cost === 15, "tạo video 360p");
 const vid = await waitJob(user, r.body.job.id, 180_000);
@@ -143,6 +159,7 @@ if (vid.job.outputs[0]) {
   r = await user(vid.job.outputs[0].url);
   check(r.status === 200 && r.body.length > 1000, `tải video ${r.body.length} bytes`);
 }
+} else console.log("· bỏ qua kiểm tra video (SKIP_VIDEO)");
 
 // --- Validate tham số ---
 r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "spaceship", style: "modern" }, img) });
@@ -165,9 +182,11 @@ r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "
 check(r.status === 400, "vật liệu không hợp lệ bị từ chối");
 r = await user("/api/jobs", { method: "POST", form: jobForm("render", { scene: "exterior", style: "modern", materials: ["stone", "glass", "oak", "brass", "rattan"] }, img) });
 check(r.status === 400, "quá 4 vật liệu bị từ chối");
-r = await user("/api/jobs", { method: "POST", form: jobForm("video", { move: "walkthrough", speed: "slow", ambience: "water", resolution: "360p" }, img) });
-check(r.status === 201, "video chuyển động mới (đi xuyên không gian)");
-if (r.status === 201) await waitJob(user, r.body.job.id, 180_000);
+if (!SKIP_VIDEO) {
+  r = await user("/api/jobs", { method: "POST", form: jobForm("video", { move: "walkthrough", speed: "slow", ambience: "water", resolution: "360p" }, img) });
+  check(r.status === 201, "video chuyển động mới (đi xuyên không gian)");
+  if (r.status === 201) await waitJob(user, r.body.job.id, 180_000);
+}
 
 const assist = (fields) => {
   const fd = new FormData();
